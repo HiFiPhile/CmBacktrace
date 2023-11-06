@@ -29,9 +29,10 @@
 #ifndef _CMB_DEF_H_
 #define _CMB_DEF_H_
 
-#include <cmb_cfg.h>
 #include <stdint.h>
 #include <stdlib.h>
+
+#include "cmb_cfg.h"
 
 /* library software version number */
 #define CMB_SW_VERSION                "1.4.2"
