@@ -38,6 +38,7 @@ extern "C" {
 size_t cm_backtrace_call_stack(uint32_t *buffer, size_t size, uint32_t sp);
 void cm_backtrace_assert(uint32_t sp);
 void cm_backtrace_fault(uint32_t fault_handler_lr, uint32_t fault_handler_sp);
+bool cm_debugger_attached(void);
 
 #ifdef __cplusplus
 }

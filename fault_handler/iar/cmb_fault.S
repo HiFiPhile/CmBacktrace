@@ -2,6 +2,8 @@
 ; * This file is part of the CmBacktrace Library.
 ; *
 ; * Copyright (c) 2016, Armink, <armink.ztl@gmail.com>
+; * Copyright (c) 2023, HiFiPhile, <admin@hifiphile.com>
+; *
 ; *
 ; * Permission is hereby granted, free of charge, to any person obtaining
 ; * a copy of this software and associated documentation files (the
@@ -32,15 +34,38 @@
     PRESERVE8
 
 ; NOTE: If use this file's HardFault_Handler, please comments the HardFault_Handler code on other file.
-    IMPORT cm_backtrace_fault
+    PUBWEAK cm_backtrace_fault
     EXPORT HardFault_Handler
+    EXPORT cm_debugger_attached
 
-HardFault_Handler:
+HardFault_Handler
     MOV     r0, lr                  ; get lr
     MOV     r1, sp                  ; get stack pointer (current is MSP)
+    LDR     r2, [r1,#24]            ; load the instruction that triggered hard fault
+    LDRH    r2, [r2]
+    LDR     r3, =0xBEAB             ; check "BKPT 0xAB" (0xBEAB)
+    CMP     r2, r3
+    BEQ     Debugger_Ret
     BL      cm_backtrace_fault
 
 Fault_Loop
-    BL      Fault_Loop              ;while(1)
+    BL      Fault_Loop              ; while(1)
+
+Debugger_Ret
+    LDR     r0, [r1,#24]            ; adjust location to return to by 1 instruction (2 bytes)
+    ADDS    r0, #2
+    STR     r0, [r1,#24]            ; load R0 to #0 for debugger detection
+    MOVS    r0, #0
+    STR     r0, [r1,#0]
+    BX      lr
+
+    SECTION .text:CODE:REORDER:NOROOT(1)
+cm_debugger_attached
+    MOVS    r0,  #0x01
+    BKPT    0xab
+    BX      lr
+
+cm_backtrace_fault
+    B      cm_backtrace_fault
 
     END
