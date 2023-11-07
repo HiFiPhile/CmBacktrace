@@ -311,17 +311,6 @@ if (!(EXPR))                                                                   \
     while (1);                                                                 \
 }
 
-/* ELF(Executable and Linking Format) file extension name for each compiler */
-#if defined(__CC_ARM) || defined(__CLANG_ARM) || defined(__ARMCC_VERSION)
-    #define CMB_ELF_FILE_EXTENSION_NAME          ".axf"
-#elif defined(__ICCARM__)
-    #define CMB_ELF_FILE_EXTENSION_NAME          ".elf"
-#elif defined(__GNUC__)
-    #define CMB_ELF_FILE_EXTENSION_NAME          ".elf"
-#else
-    #error "not supported compiler"
-#endif
-
 #ifndef cmb_println
     #error "cmb_println isn't defined in 'cmb_cfg.h'"
 #endif

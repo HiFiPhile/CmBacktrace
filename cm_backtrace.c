@@ -64,7 +64,6 @@
 
 enum {
     PRINT_MAIN_STACK_CFG_ERROR,
-    PRINT_FIRMWARE_INFO,
     PRINT_ASSERT_ON_THREAD,
     PRINT_ASSERT_ON_HANDLER,
     PRINT_THREAD_STACK_INFO,
@@ -120,9 +119,6 @@ static const char * const print_info[] = {
 #endif
 };
 
-static char fw_name[CMB_NAME_MAX + 1] = {0};
-static char hw_ver[CMB_NAME_MAX + 1] = {0};
-static char sw_ver[CMB_NAME_MAX + 1] = {0};
 static uint32_t main_stack_start_addr = 0;
 static size_t main_stack_size = 0;
 static uint32_t code_start_addr = 0;
@@ -145,11 +141,9 @@ static bool on_thread_before_fault = false;
 /**
  * library initialize
  */
-void cm_backtrace_init(const char *firmware_name, const char *hardware_ver, const char *software_ver) {
-    strncpy(fw_name, firmware_name, CMB_NAME_MAX);
-    strncpy(hw_ver, hardware_ver, CMB_NAME_MAX);
-    strncpy(sw_ver, software_ver, CMB_NAME_MAX);
-
+static bool cm_backtrace_init() {
+    if (init_ok)
+        return true;
 #if defined(__ARMCC_VERSION)
     main_stack_start_addr = (uint32_t)&CSTACK_BLOCK_START(CMB_CSTACK_BLOCK_NAME);
     main_stack_size = (uint32_t)&CSTACK_BLOCK_END(CMB_CSTACK_BLOCK_NAME) - main_stack_start_addr;
@@ -171,17 +165,11 @@ void cm_backtrace_init(const char *firmware_name, const char *hardware_ver, cons
 
     if (main_stack_size == 0) {
         cmb_println(print_info[PRINT_MAIN_STACK_CFG_ERROR]);
-        return;
+        return false;
     }
 
     init_ok = true;
-}
-
-/**
- * print firmware information, such as: firmware name, hardware version, software version
- */
-void cm_backtrace_firmware_info(void) {
-    cmb_println(print_info[PRINT_FIRMWARE_INFO], fw_name, hw_ver, sw_ver);
+    return true;
 }
 
 #ifdef CMB_USING_OS_PLATFORM
@@ -275,7 +263,6 @@ static void dump_stack(uint32_t stack_start_addr, size_t stack_size, uint32_t *s
     for (; (uint32_t) stack_pointer < stack_start_addr + stack_size && deep; stack_pointer++, deep--) {
         cmb_println("  addr: %08x    data: %08x", stack_pointer, *stack_pointer);
     }
-    cmb_println("====================================");
 }
 #endif /* CMB_USING_DUMP_STACK_INFO */
 
@@ -414,8 +401,7 @@ static void print_call_stack(uint32_t sp) {
     }
 
     if (cur_depth) {
-        cmb_println(print_info[PRINT_CALL_STACK_INFO], fw_name, CMB_ELF_FILE_EXTENSION_NAME,
-                call_stack_info);
+        cmb_println(print_info[PRINT_CALL_STACK_INFO], call_stack_info);
     } else {
         cmb_println(print_info[PRINT_CALL_STACK_ERR]);
     }
@@ -432,10 +418,9 @@ void cm_backtrace_assert(uint32_t sp) {
     uint32_t cur_stack_pointer = cmb_get_sp();
 #endif
 
-    CMB_ASSERT(init_ok);
+    CMB_ASSERT(cm_backtrace_init());
 
     cmb_println("");
-    cm_backtrace_firmware_info();
 
 #ifdef CMB_USING_OS_PLATFORM
     /* OS environment */
@@ -616,14 +601,13 @@ void cm_backtrace_fault(uint32_t fault_handler_lr, uint32_t fault_handler_sp) {
     size_t stack_size = main_stack_size;
 #endif
 
-    CMB_ASSERT(init_ok);
+    CMB_ASSERT(cm_backtrace_init());
     /* only call once */
     CMB_ASSERT(!on_fault);
 
     on_fault = true;
 
     cmb_println("");
-    cm_backtrace_firmware_info();
 
 #ifdef CMB_USING_OS_PLATFORM
     on_thread_before_fault = fault_handler_lr & (1UL << 2);
@@ -690,7 +674,6 @@ void cm_backtrace_fault(uint32_t fault_handler_lr, uint32_t fault_handler_sp) {
                                                                 regs_name[5], regs.saved.lr,
                                                                 regs_name[6], regs.saved.pc,
                                                                 regs_name[7], regs.saved.psr.value);
-        cmb_println("==============================================================");
     }
 
     /* the Cortex-M0 is not support fault diagnosis */
