@@ -109,7 +109,7 @@
 #define CMB_CALL_STACK_MAX_DEPTH       32
 #endif
 
-/* 
+/*
  * The maximum print depth in case of exception prevents
  * too much stack information from printing and insufficient log space
  */
@@ -332,7 +332,7 @@ if (!(EXPR))                                                                   \
     #elif (CMB_OS_PLATFORM_TYPE == CMB_OS_PLATFORM_UCOSIII)
         #include <os.h>
     #elif (CMB_OS_PLATFORM_TYPE == CMB_OS_PLATFORM_FREERTOS)
-        #include <FreeRTOS.h>  
+        #include <FreeRTOS.h>
         extern uint32_t *vTaskStackAddr(void);/* need to modify the FreeRTOS/tasks source code */
         extern uint32_t vTaskStackSize(void);
         extern char * vTaskName(void);
@@ -344,20 +344,7 @@ if (!(EXPR))                                                                   \
 #endif /* (defined(CMB_USING_BARE_METAL_PLATFORM) && defined(CMB_USING_OS_PLATFORM)) */
 
 /* include or export for supported cmb_get_msp, cmb_get_psp and cmb_get_sp function */
-#if defined(__CC_ARM)
-    static __inline __asm uint32_t cmb_get_msp(void) {
-        mrs r0, msp
-        bx lr
-    }
-    static __inline __asm uint32_t cmb_get_psp(void) {
-        mrs r0, psp
-        bx lr
-    }
-    static __inline __asm uint32_t cmb_get_sp(void) {
-        mov r0, sp
-        bx lr
-    }
-#elif defined(__CLANG_ARM)
+#if defined(__CLANG_ARM)
     __attribute__( (always_inline) ) static __inline uint32_t cmb_get_msp(void) {
         uint32_t result;
         __asm volatile ("mrs %0, msp" : "=r" (result) );
@@ -374,25 +361,21 @@ if (!(EXPR))                                                                   \
         return (result);
     }
 #elif defined(__ICCARM__)
-/* IAR iccarm specific functions */
-/* Close Raw Asm Code Warning */  
-#pragma diag_suppress=Pe940    
-    static uint32_t cmb_get_msp(void)
-    {
-      __asm("mrs r0, msp");
-      __asm("bx lr");        
+    __attribute__( ( always_inline ) ) static inline uint32_t cmb_get_msp(void) {
+        register uint32_t result;
+        __asm volatile ("MRS %0, msp\n" : "=r" (result) );
+        return(result);
     }
-    static uint32_t cmb_get_psp(void)
-    {
-      __asm("mrs r0, psp");
-      __asm("bx lr");        
+    __attribute__( ( always_inline ) ) static inline uint32_t cmb_get_psp(void) {
+        register uint32_t result;
+        __asm volatile ("MRS %0, psp\n" : "=r" (result) );
+        return(result);
     }
-    static uint32_t cmb_get_sp(void)
-    {
-      __asm("mov r0, sp");
-      __asm("bx lr");       
+    __attribute__( ( always_inline ) ) static inline uint32_t cmb_get_sp(void) {
+        register uint32_t result;
+        __asm volatile ("MOV %0, sp\n" : "=r" (result) );
+        return(result);
     }
-#pragma diag_default=Pe940  
 #elif defined(__GNUC__)
     __attribute__( ( always_inline ) ) static inline uint32_t cmb_get_msp(void) {
         register uint32_t result;
