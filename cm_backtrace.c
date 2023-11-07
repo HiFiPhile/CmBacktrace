@@ -138,7 +138,9 @@ static struct cmb_hard_fault_regs regs;
 static bool statck_has_fpu_regs = false;
 #endif
 
+#ifdef CMB_USING_DUMP_STACK_INFO
 static bool on_thread_before_fault = false;
+#endif
 
 /**
  * library initialize
@@ -412,7 +414,7 @@ static void print_call_stack(uint32_t sp) {
     }
 
     if (cur_depth) {
-        cmb_println(print_info[PRINT_CALL_STACK_INFO], fw_name, CMB_ELF_FILE_EXTENSION_NAME, cur_depth * (8 + 1),
+        cmb_println(print_info[PRINT_CALL_STACK_INFO], fw_name, CMB_ELF_FILE_EXTENSION_NAME,
                 call_stack_info);
     } else {
         cmb_println(print_info[PRINT_CALL_STACK_ERR]);
@@ -605,10 +607,11 @@ static uint32_t statck_del_fpu_regs(uint32_t fault_handler_lr, uint32_t sp) {
  * @param fault_handler_sp the stack pointer on fault handler
  */
 void cm_backtrace_fault(uint32_t fault_handler_lr, uint32_t fault_handler_sp) {
-    uint32_t stack_pointer = fault_handler_sp, saved_regs_addr = stack_pointer, tcb_stack_pointer = 0;
+    uint32_t stack_pointer = fault_handler_sp, saved_regs_addr = stack_pointer;
     const char *regs_name[] = { "R0 ", "R1 ", "R2 ", "R3 ", "R12", "LR ", "PC ", "PSR" };
 
 #ifdef CMB_USING_DUMP_STACK_INFO
+    uint32_t tcb_stack_pointer = 0;
     uint32_t stack_start_addr = main_stack_start_addr;
     size_t stack_size = main_stack_size;
 #endif
