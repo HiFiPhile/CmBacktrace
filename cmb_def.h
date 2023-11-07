@@ -315,7 +315,7 @@ if (!(EXPR))                                                                   \
 #if defined(__CC_ARM) || defined(__CLANG_ARM) || defined(__ARMCC_VERSION)
     #define CMB_ELF_FILE_EXTENSION_NAME          ".axf"
 #elif defined(__ICCARM__)
-    #define CMB_ELF_FILE_EXTENSION_NAME          ".out"
+    #define CMB_ELF_FILE_EXTENSION_NAME          ".elf"
 #elif defined(__GNUC__)
     #define CMB_ELF_FILE_EXTENSION_NAME          ".elf"
 #else
